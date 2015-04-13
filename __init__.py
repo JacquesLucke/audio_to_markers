@@ -19,9 +19,9 @@ Created by YOUR NAME
 '''
 
 bl_info = {
-    "name": "My Addon Name",
+    "name": "Audio to Markers",
     "description": "",
-    "author": "Your Name",
+    "author": "Jacques Lucke",
     "version": (0, 0, 1),
     "blender": (2, 74, 0),
     "location": "View3D",
@@ -65,8 +65,6 @@ def import_submodules():
         
 loaded_modules = import_submodules()  
 
-
-   
    
 def register():
     try: bpy.utils.register_module(__name__)

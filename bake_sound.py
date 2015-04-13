@@ -3,20 +3,6 @@ import os
 from bpy.props import *
 from . utils import *
 
-frequence_ranges = (
-    ("0 - 20 Hz", (0, 20)),
-    ("20 - 40 Hz", (20, 40)),
-    ("40 - 80 Hz", (40, 80)),
-    ("80 - 250 Hz", (80, 250)),
-    ("250 - 600 Hz", (250, 600)),
-    ("600 - 4000 Hz", (600, 4000)),
-    ("4 - 6 kHz", (4000, 6000)),
-    ("6 - 8 kHz", (6000, 8000)),
-    ("8 - 20 kHz", (8000, 20000)) )
-frequence_range_dict = {frequence_range[0]: frequence_range[1] for frequence_range in frequence_ranges} 
-frequence_range_items = [(frequence_range[0], frequence_range[0], "") for frequence_range in frequence_ranges]
-
-
 class SelectSoundFile(bpy.types.Operator):
     bl_idname = "audio_to_markers.select_sound_file"
     bl_label = "Select Sound File"
@@ -82,8 +68,8 @@ class LoadSoundIntoSequenceEditor(bpy.types.Operator):
     
 class RemoveSoundStrips(bpy.types.Operator):
     bl_idname = "audio_to_markers.remove_sound_strips"
-    bl_label = "Remove all sound strips which were created with this addon"
-    bl_description = ""
+    bl_label = "Remove Sound Strips"
+    bl_description = "Remove all sound strips which were created with this addon"
     bl_options = {"REGISTER", "INTERNAL"}
     
     @classmethod
@@ -103,3 +89,17 @@ class RemoveSoundStrips(bpy.types.Operator):
                 
         return {"FINISHED"}
             
+            
+class CacheSounds(bpy.types.Operator):
+    bl_idname = "audio_to_markers.cache_sound_strips"
+    bl_label = "Cache Sound Strips"
+    bl_description = "Enable 'Use Memory Cache' for the sound strips with the path"
+    bl_options = {"REGISTER"}
+    
+    def execute(self, context):
+        path = get_settings().path
+        for sound in bpy.data.sounds:
+            if sound.filepath == path and not sound.use_memory_cache:
+                sound.use_memory_cache = True
+        return {"FINISHED"}
+               
