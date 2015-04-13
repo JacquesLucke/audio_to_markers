@@ -46,9 +46,10 @@ class LoadSoundIntoSequenceEditor(bpy.types.Operator):
     
     def execute(self, context):
         scene = context.scene
+        settings = get_settings()
         self.create_sequence_editor_if_necessary()
         
-        path = get_settings().path
+        path = settings.path
         name = os.path.basename(path)
         frame = scene.frame_start
         channel = self.get_empty_channel_index(scene)
@@ -60,6 +61,9 @@ class LoadSoundIntoSequenceEditor(bpy.types.Operator):
             channel = channel)
             
         scene.frame_end = sequence.frame_start + sequence.frame_duration
+        
+        item = settings.sound_strips.add()
+        item.sequence_name = sequence.name
         
         return {"FINISHED"}
     
@@ -74,3 +78,28 @@ class LoadSoundIntoSequenceEditor(bpy.types.Operator):
             if not channel in used_channels:
                 return channel
         return 0
+    
+    
+class RemoveSoundStrips(bpy.types.Operator):
+    bl_idname = "audio_to_markers.remove_sound_strips"
+    bl_label = "Remove all sound strips which were created with this addon"
+    bl_description = ""
+    bl_options = {"REGISTER", "INTERNAL"}
+    
+    @classmethod
+    def poll(cls, context):
+        return context.scene.sequence_editor
+    
+    def execute(self, context):
+        scene = context.scene
+        settings = get_settings()
+        sequences = scene.sequence_editor.sequences
+        
+        for item in settings.sound_strips:
+            sequence = sequences.get(item.sequence_name)
+            if sequence:
+                sequence.sound.use_memory_cache = False
+                sequences.remove(sequence)
+                
+        return {"FINISHED"}
+            

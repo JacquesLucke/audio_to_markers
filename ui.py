@@ -17,3 +17,4 @@ class AudioToMarkersPanel(bpy.types.Panel):
         
         row = layout.row(align = True)
         row.operator("audio_to_markers.load_sound_into_sequence_editor", text = "Load Sound")
+        row.operator("audio_to_markers.remove_sound_strips", text = "", icon = "X")
