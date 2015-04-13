@@ -3,6 +3,7 @@ import re
 from bpy.props import *
 from bpy.types import PropertyGroup
 from . utils import *
+from . bake_sound import frequence_changed
 
 
 frequence_ranges = [
@@ -19,9 +20,8 @@ frequence_ranges = [
 def get_frequence_range_items(self, context):
     items = []
     bake = get_settings().bake
-    ranges = [(bake.low, bake.high)] + frequence_ranges
     
-    for low, high in ranges:
+    for low, high in frequence_ranges:
         ui_name = make_frequence_ui_name(low, high)
         item = (ui_name, ui_name, "")
         items.append(item)
@@ -37,33 +37,24 @@ def apply_preset(self, context):
         match = re.match("([0-9]+) - ([0-9]+)", settings.frequence_range_preset)
         low, high = float(match.group(1)), float(match.group(2))
         bake.low, bake.high = low, high
-        settings.frequence_range_preset = make_frequence_ui_name(low, high)
         is_setting = False
         
 def make_frequence_ui_name(low, high):
     return "{} - {} Hz".format(round(low), round(high))   
 
 
-def fits_current_settings(self):
-    settings = get_settings()
-    return settings.path == self.path and \
-        settings.bake.low == self.settings.low and \
-        settings.bake.high == self.settings.high     
-        
-        
 
 class SoundStripData(PropertyGroup):
     sequence_name = StringProperty(name = "Sequence Name", default = "")
     
 class BakeSettings(PropertyGroup):
-    low = FloatProperty(name = "Low Frequence", default = 80, step = 100, min = 0, max = 50000)
-    high = FloatProperty(name = "High Frequence", default = 250, step = 100, min = 0, max = 50000)
+    low = FloatProperty(name = "Low Frequence", default = 80, step = 100, min = 0, max = 50000, update = frequence_changed)
+    high = FloatProperty(name = "High Frequence", default = 250, step = 100, min = 0, max = 50000, update = frequence_changed)
 
 class BakedData(PropertyGroup):
-    settings = PointerProperty(name = "Bake Settings", type = BakeSettings)
+    bake = PointerProperty(name = "Bake Settings", type = BakeSettings)
     path = StringProperty(name = "File Path", default = "")
     strength = FloatProperty(name = "Strength", default = 0)
-    fits_current_settings = property(fits_current_settings)
 
 class Settings(PropertyGroup):
     path = StringProperty(name = "File Path", description = "Path of the sound file", default = "")
