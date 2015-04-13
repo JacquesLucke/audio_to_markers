@@ -41,7 +41,14 @@ def apply_preset(self, context):
         is_setting = False
         
 def make_frequence_ui_name(low, high):
-    return "{} - {} Hz".format(round(low), round(high))        
+    return "{} - {} Hz".format(round(low), round(high))   
+
+
+def fits_current_settings(self):
+    settings = get_settings()
+    return settings.path == self.path and \
+        settings.bake.low == self.settings.low and \
+        settings.bake.high == self.settings.high     
         
         
 
@@ -52,11 +59,20 @@ class BakeSettings(PropertyGroup):
     low = FloatProperty(name = "Low Frequence", default = 80, step = 100, min = 0, max = 50000)
     high = FloatProperty(name = "High Frequence", default = 250, step = 100, min = 0, max = 50000)
 
+class BakedData(PropertyGroup):
+    settings = PointerProperty(name = "Bake Settings", type = BakeSettings)
+    path = StringProperty(name = "File Path", default = "")
+    strength = FloatProperty(name = "Strength", default = 0)
+    fits_current_settings = property(fits_current_settings)
+
 class Settings(PropertyGroup):
-    path = StringProperty(name = "File Path", description = "Path of the music file", default = "")
+    path = StringProperty(name = "File Path", description = "Path of the sound file", default = "")
     sound_strips = CollectionProperty(name = "Sound Strips", type = SoundStripData)
-    bake = PointerProperty(name = "Bake Settings", type = BakeSettings)
+    
     frequence_range_preset = EnumProperty(name = "Frequence Range Preset", items = get_frequence_range_items, update = apply_preset)
+    bake = PointerProperty(name = "Bake Settings", type = BakeSettings)
+    baked_data = CollectionProperty(name = "Baked Data", type = BakedData)
+    
 
 def register():
     bpy.types.Scene.audio_to_markers = PointerProperty(name = "Audio to Markers", type = Settings)

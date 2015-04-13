@@ -24,3 +24,6 @@ class AudioToMarkersPanel(bpy.types.Panel):
         col.prop(settings, "frequence_range_preset", text = "")
         col.prop(settings.bake, "low")
         col.prop(settings.bake, "high")
+        col.operator("audio_to_markers.bake_sound", text = "Bake", icon = "RNDCURVE")
+        
+        layout.operator("audio_to_markers.remove_baked_data")

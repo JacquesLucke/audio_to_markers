@@ -104,3 +104,66 @@ class CacheSounds(bpy.types.Operator):
                 sound.use_memory_cache = True
         return {"FINISHED"}
                
+               
+class BakeSound(bpy.types.Operator):
+    bl_idname = "audio_to_markers.bake_sound"
+    bl_label = "Bake Sound"
+    bl_description = "Bake the sound from current settings"
+    bl_options = {"REGISTER", "INTERNAL"}
+    
+    @classmethod
+    def poll(cls, context):
+        return os.path.exists(get_settings().path)
+    
+    def execute(self, context):
+        scene = context.scene
+        scene.sync_mode = "AUDIO_SYNC"
+        
+        settings = get_settings()
+        
+        frame_before = scene.frame_current
+        scene.frame_current = scene.frame_start
+        
+        fcurve = self.new_fcurve_from_settings(settings)
+        only_select_fcurve(fcurve)
+        
+        fcurve.lock = False
+        bpy.ops.graph.sound_bake(
+            filepath = settings.path,
+            low = settings.bake.low,
+            high = settings.bake.high)
+        
+        scene.frame_current = frame_before            
+        
+        return {"FINISHED"}
+    
+    def new_fcurve_from_settings(self, settings):
+        baked_data = settings.baked_data
+        item = baked_data.add()
+        item.path = settings.path
+        item.settings.low = settings.bake.low
+        item.settings.high = settings.bake.high
+        item.keyframe_insert("strength", frame = 0)
+        index = len(baked_data) - 1
+        data_path = "audio_to_markers.baked_data[{}].strength".format(index)
+        fcurve = get_fcurve_from_path(bpy.context.scene, data_path)
+        return fcurve
+    
+                       
+class RemoveBakedData(bpy.types.Operator):
+    bl_idname = "audio_to_markers.remove_baked_data"
+    bl_label = "Remove Baked Data"
+    bl_description = ""
+    bl_options = {"REGISTER", "INTERNAL"}
+    
+    def execute(self, context):
+        try:
+            get_settings().baked_data.clear()
+            fcurves = context.scene.animation_data.action.fcurves
+            for fcurve in fcurves:
+                if fcurve.data_path.startswith("audio_to_markers.baked_data["):
+                    fcurves.remove(fcurve)
+        except: pass
+        context.area.tag_redraw()
+        return {"FINISHED"}
+                               
