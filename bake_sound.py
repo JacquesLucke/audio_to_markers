@@ -5,14 +5,15 @@ from . utils import *
 from . event_helper import *
 from . properties import frequence_ranges
 
-def frequence_changed(self, context):
-    update_fcurve_selection()
-        
-def update_fcurve_selection():    
-    fcurve = get_current_sound_fcurve()
-    if fcurve:
-        only_select_fcurve(fcurve)    
-      
+def update_fcurve_selection():   
+    current_fcurve = get_current_sound_fcurve()
+    if current_fcurve:
+        settings = get_settings() 
+        fcurves = get_sound_fcurves()
+        for fcurve in fcurves:
+            fcurve.hide = settings.hide_unused_fcurves
+        current_fcurve.hide = False
+        only_select_fcurve(current_fcurve)  
 
 class SelectSoundFile(bpy.types.Operator):
     bl_idname = "audio_to_markers.select_sound_file"
@@ -163,7 +164,7 @@ class BakeSound(bpy.types.Operator):
 class BakeAllFrequences(bpy.types.Operator):
     bl_idname = "audio_to_markers.bake_all_frequences"
     bl_label = "Bake All Frequences"
-    bl_description = ""
+    bl_description = "Bake all template frequences"
     bl_options = {"REGISTER", "INTERNAL"}
     
     @classmethod
@@ -206,21 +207,25 @@ class BakeAllFrequences(bpy.types.Operator):
 class RemoveBakedData(bpy.types.Operator):
     bl_idname = "audio_to_markers.remove_baked_data"
     bl_label = "Remove Baked Data"
-    bl_description = ""
+    bl_description = "Remove all sound fcurves created by this addon"
     bl_options = {"REGISTER", "INTERNAL"}
     
     def execute(self, context):
-        try:
-            get_settings().baked_data.clear()
-            fcurves = context.scene.animation_data.action.fcurves
-            for fcurve in fcurves:
-                if fcurve.data_path.startswith("audio_to_markers.baked_data["):
-                    fcurves.remove(fcurve)
-        except: pass
+        get_settings().baked_data.clear()
+        for fcurve in get_sound_fcurves():
+            context.scene.animation_data.action.fcurves.remove(fcurve)
         context.area.tag_redraw()
         return {"FINISHED"}
                                
-                               
+
+def get_sound_fcurves():
+    fcurves = []
+    try:
+        for fcurve in bpy.context.scene.animation_data.action.fcurves:
+            if fcurve.data_path.startswith("audio_to_markers.baked_data["):
+                fcurves.append(fcurve)
+    except: pass
+    return fcurves                              
                                
 def get_current_sound_fcurve():
     def is_current_item(item):

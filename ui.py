@@ -32,6 +32,8 @@ class AudioToMarkersPanel(bpy.types.Panel):
         subcol.operator("audio_to_markers.bake_sound", text = "Bake", icon = "RNDCURVE")
         
         row = col.row(align = True)
+        if settings.hide_unused_fcurves: row.prop(settings, "hide_unused_fcurves", text = "", icon = "RESTRICT_VIEW_ON")
+        else: row.prop(settings, "hide_unused_fcurves", text = "", icon = "RESTRICT_VIEW_OFF")
         row.operator("audio_to_markers.bake_all_frequences", text = "Bake All")
         row.operator("audio_to_markers.remove_baked_data", text = "", icon = "X")
         
