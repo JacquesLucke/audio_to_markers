@@ -1,8 +1,8 @@
 '''
-Copyright (C) 2015 YOUR NAME
-YOUR@MAIL.com
+Copyright (C) 2015 Jacques Lucke
+mail@jlucke.com
 
-Created by YOUR NAME
+Created by Jacques Lucke
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
