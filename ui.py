@@ -11,19 +11,31 @@ class AudioToMarkersPanel(bpy.types.Panel):
         layout = self.layout
         settings = get_settings()
         
-        row = layout.row(align = True)
+        col = layout.column(align = False)
+        
+        row = col.row(align = True)
         row.prop(settings, "path", text = "Sound")
         row.operator("audio_to_markers.select_sound_file", text = "", icon = "FILE_SOUND")
         
-        row = layout.row(align = True)
+        row = col.row(align = True)
         row.operator("audio_to_markers.cache_sound_strips", text = "", icon = "LOAD_FACTORY")
         row.operator("audio_to_markers.load_sound_into_sequence_editor", text = "Load Sound")
         row.operator("audio_to_markers.remove_sound_strips", text = "", icon = "X")
         
-        col = layout.column(align = True)
-        col.prop(settings, "frequence_range_preset", text = "")
-        col.prop(settings.bake, "low")
-        col.prop(settings.bake, "high")
-        col.operator("audio_to_markers.bake_sound", text = "Bake", icon = "RNDCURVE")
         
-        layout.operator("audio_to_markers.remove_baked_data")
+        col = layout.column(align = False)
+        
+        subcol = col.column(align = True)
+        subcol.prop(settings, "frequence_range_preset", text = "")
+        subcol.prop(settings.bake, "low")
+        subcol.prop(settings.bake, "high")
+        subcol.operator("audio_to_markers.bake_sound", text = "Bake", icon = "RNDCURVE")
+        
+        row = col.row(align = True)
+        row.operator("audio_to_markers.bake_all_frequences", text = "Bake All")
+        row.operator("audio_to_markers.remove_baked_data", text = "", icon = "X")
+        
+        
+        
+        if settings.info != "":
+            layout.label(settings.info)

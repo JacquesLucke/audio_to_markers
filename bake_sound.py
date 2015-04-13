@@ -2,6 +2,8 @@ import bpy
 import os
 from bpy.props import *
 from . utils import *
+from . event_helper import *
+from . properties import frequence_ranges
 
 class SelectSoundFile(bpy.types.Operator):
     bl_idname = "audio_to_markers.select_sound_file"
@@ -148,6 +150,50 @@ class BakeSound(bpy.types.Operator):
         data_path = "audio_to_markers.baked_data[{}].strength".format(index)
         fcurve = get_fcurve_from_path(bpy.context.scene, data_path)
         return fcurve
+    
+    
+class BakeAllFrequences(bpy.types.Operator):
+    bl_idname = "audio_to_markers.bake_all_frequences"
+    bl_label = "Bake All Frequences"
+    bl_description = ""
+    bl_options = {"REGISTER", "INTERNAL"}
+    
+    @classmethod
+    def poll(cls, context):
+        return os.path.exists(get_settings().path)
+    
+    def invoke(self, context, event):
+        context.window_manager.modal_handler_add(self)
+        self.timer = context.window_manager.event_timer_add(0.001, context.window)
+        self.progress_index = 0
+        self.counter = 1
+        context.area.tag_redraw()
+        return {"RUNNING_MODAL"}
+    
+    def modal(self, context, event):
+        if is_middle_mouse(event): return {"PASS_THROUGH"}
+    
+        if check_event(event, "ESC") or self.progress_index == len(frequence_ranges):
+            self.finish()
+            return {"FINISHED"}
+        
+        settings = get_settings()
+        settings.info = "Bake {} of {}".format(self.progress_index, len(frequence_ranges))
+        bake_settings = settings.bake
+        self.counter += 1    
+        
+        if event.type == "TIMER" and self.counter % 30 == 0:
+            context.area.tag_redraw()
+            bake_settings.low, bake_settings.high = frequence_ranges[self.progress_index]
+            bpy.ops.audio_to_markers.bake_sound()
+            self.progress_index += 1
+        
+        return {"RUNNING_MODAL"}
+    
+    def finish(self):
+        bpy.context.window_manager.event_timer_remove(self.timer)
+        get_settings().info = ""
+            
     
                        
 class RemoveBakedData(bpy.types.Operator):

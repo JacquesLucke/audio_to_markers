@@ -73,6 +73,8 @@ class Settings(PropertyGroup):
     bake = PointerProperty(name = "Bake Settings", type = BakeSettings)
     baked_data = CollectionProperty(name = "Baked Data", type = BakedData)
     
+    info = StringProperty(name = "Info Text", default = "")
+    
 
 def register():
     bpy.types.Scene.audio_to_markers = PointerProperty(name = "Audio to Markers", type = Settings)
