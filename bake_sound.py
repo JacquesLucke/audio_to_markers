@@ -1,4 +1,5 @@
 import bpy
+import os
 from bpy.props import *
 from . utils import *
 
@@ -32,3 +33,44 @@ class SelectSoundFile(bpy.types.Operator):
         get_settings().path = self.filepath
         return {"FINISHED"}
         
+        
+class LoadSoundIntoSequenceEditor(bpy.types.Operator):
+    bl_idname = "audio_to_markers.load_sound_into_sequence_editor"
+    bl_label = "Load Sound into Sequence Editor"
+    bl_description = "Create a new sound strip"
+    bl_options = {"REGISTER", "INTERNAL"}
+    
+    @classmethod
+    def poll(cls, context):
+        return os.path.exists(get_settings().path)
+    
+    def execute(self, context):
+        scene = context.scene
+        self.create_sequence_editor_if_necessary()
+        
+        path = get_settings().path
+        name = os.path.basename(path)
+        frame = scene.frame_start
+        channel = self.get_empty_channel_index(scene)
+        
+        sequence = scene.sequence_editor.sequences.new_sound(
+            name = name, 
+            filepath = path,
+            frame_start = frame,
+            channel = channel)
+            
+        scene.frame_end = sequence.frame_start + sequence.frame_duration
+        
+        return {"FINISHED"}
+    
+    def create_sequence_editor_if_necessary(self):
+        scene = bpy.context.scene
+        if not scene.sequence_editor:
+            scene.sequence_editor_create() 
+    
+    def get_empty_channel_index(self, scene):
+        used_channels = [sequence.channel for sequence in scene.sequence_editor.sequences]
+        for channel in range(1, 32):
+            if not channel in used_channels:
+                return channel
+        return 0
