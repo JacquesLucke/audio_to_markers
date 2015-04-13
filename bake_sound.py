@@ -86,7 +86,8 @@ class RemoveSoundStrips(bpy.types.Operator):
             if sequence:
                 sequence.sound.use_memory_cache = False
                 sequences.remove(sequence)
-                
+        settings.sound_strips.clear()   
+             
         return {"FINISHED"}
             
             
