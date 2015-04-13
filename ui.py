@@ -14,3 +14,6 @@ class AudioToMarkersPanel(bpy.types.Panel):
         row = layout.row(align = True)
         row.prop(settings, "path", text = "Sound")
         row.operator("audio_to_markers.select_sound_file", text = "", icon = "FILE_SOUND")
+        
+        row = layout.row(align = True)
+        row.operator("audio_to_markers.load_sound_into_sequence_editor", text = "Load Sound")
