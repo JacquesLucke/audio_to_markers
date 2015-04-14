@@ -37,6 +37,7 @@ class AudioToMarkersPanel(bpy.types.Panel):
         row.operator("audio_to_markers.bake_all_frequences", text = "Bake All")
         row.operator("audio_to_markers.remove_baked_data", text = "", icon = "X")
                 
+        layout.operator("audio_to_markers.insert_markers")                
         
         if settings.info != "":
             layout.label(settings.info)
