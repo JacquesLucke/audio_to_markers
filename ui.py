@@ -38,6 +38,10 @@ class AudioToMarkersPanel(bpy.types.Panel):
         row.operator("audio_to_markers.remove_baked_data", text = "", icon = "X")
         
         
+        col = layout.column(align = False)
+        row = col.row(align = True)
+        row.operator("audio_to_markers.bake_fcurves")
+        
         
         if settings.info != "":
             layout.label(settings.info)
