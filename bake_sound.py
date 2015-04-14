@@ -204,6 +204,7 @@ class BakeAllFrequences(bpy.types.Operator):
     def finish(self):
         bpy.context.window_manager.event_timer_remove(self.timer)
         get_settings().info = ""
+        bpy.context.area.tag_redraw()
             
                    
 class RemoveBakedData(bpy.types.Operator):
