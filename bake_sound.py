@@ -188,7 +188,6 @@ class BakeAllFrequences(bpy.types.Operator):
             return {"FINISHED"}
         
         settings = get_settings()
-        settings.info = "Bake {} of {}".format(self.progress_index, len(frequence_ranges))
         bake_settings = settings.bake
         self.counter += 1    
         
@@ -197,6 +196,8 @@ class BakeAllFrequences(bpy.types.Operator):
             bake_settings.low, bake_settings.high = frequence_ranges[self.progress_index]
             bpy.ops.audio_to_markers.bake_sound()
             self.progress_index += 1
+            
+        settings.info = "Bake {} of {}".format(self.progress_index, len(frequence_ranges))
         
         return {"RUNNING_MODAL"}
     
