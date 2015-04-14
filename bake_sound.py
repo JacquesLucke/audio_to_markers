@@ -15,6 +15,7 @@ def update_fcurve_selection():
         current_fcurve.hide = False
         only_select_fcurve(current_fcurve)  
 
+
 class SelectSoundFile(bpy.types.Operator):
     bl_idname = "audio_to_markers.select_sound_file"
     bl_label = "Select Sound File"
