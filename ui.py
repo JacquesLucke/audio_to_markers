@@ -36,8 +36,10 @@ class AudioToMarkersPanel(bpy.types.Panel):
         else: row.prop(settings, "hide_unused_fcurves", text = "", icon = "RESTRICT_VIEW_OFF")
         row.operator("audio_to_markers.bake_all_frequences", text = "Bake All")
         row.operator("audio_to_markers.remove_baked_data", text = "", icon = "X")
-                
-        layout.operator("audio_to_markers.insert_markers")                
+           
+        row = layout.row(align = True)     
+        row.operator("audio_to_markers.insert_markers")     
+        row.operator("audio_to_markers.remove_markers", text = "", icon = "X")          
         
         if settings.info != "":
             layout.label(settings.info)
