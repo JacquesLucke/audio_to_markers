@@ -1,7 +1,20 @@
 import bpy
 from bgl import *
-from . bake_sound import get_current_sound_fcurve
+from mathutils import Vector
 from . event_helper import *
+from . bake_sound import get_current_sound_fcurve
+
+
+is_running = False
+def activate():
+    global is_running
+    is_running = True
+def deaktivate():
+    global is_running
+    is_running = False
+    
+def is_marker_insertion_running():
+    return is_running    
 
 class InsertMarkers(bpy.types.Operator):
     bl_idname = "audio_to_markers.insert_markers"
@@ -19,14 +32,18 @@ class InsertMarkers(bpy.types.Operator):
         context.window_manager.modal_handler_add(self)
         self.mode = "NONE"
         self.snap_size = 20
+        self.mouse_position = get_mouse_position(event)
+        self.left_mouse_down_position = self.mouse_position
+        self.left_mouse_down = False
+        self.temporary_markers = []
+        activate()
         return {"RUNNING_MODAL"}
-    
-    
     
     def modal(self, context, event):
         context.area.tag_redraw()
+        self.update_mouse_status(event)
             
-        if event.type in {"RIGHTMOUSE", "ESC"}:
+        if event.type in {"RIGHTMOUSE", "ESC"} or not is_running:
             self.finish()
             return {"CANCELLED"}
         
@@ -42,17 +59,43 @@ class InsertMarkers(bpy.types.Operator):
             return {"RUNNING_MODAL"}
         elif self.mode == "NO_FCURVE":
             self.mode = "NONE"
-    
+            
         if self.mode == "NONE":
             snap_location, snap_frame = self.get_snap_data(event, fcurve)
-            self.mouse_x = event.mouse_region_x
             
             self.temporary_markers = [(snap_location, not marker_exists(snap_frame))]
             
-            if is_left_click(event):
+            if is_left_release(event):
                 self.insert_marker(snap_frame)
+                
+            if self.left_mouse_down:
+                if (self.mouse_position - self.left_mouse_down_position).length > 10:
+                    self.mode = "INSERT MULTIPLE MARKERS"
+                    
+        if self.mode == "INSERT MULTIPLE MARKERS":
+            start_frame = self.get_frame_under_region_x(self.left_mouse_down_position.x)
+            end_frame = self.get_frame_under_region_x(event.mouse_region_x)
+            threshold = self.region_to_view(*self.mouse_position)[1]
+            frames = get_high_frames(fcurve, start_frame, end_frame, threshold)
+            marked_frames = get_marked_frames()
+            self.temporary_markers = []
+            context.space_data.cursor_position_y = threshold
+            for frame in frames:
+                self.temporary_markers.append((self.view_to_region(frame, fcurve.evaluate(frame)), not frame in marked_frames))
+            if not self.left_mouse_down:
+                self.mode = "NONE"
+                self.modal(context, event)
             
         return {"RUNNING_MODAL"}
+    
+    def update_mouse_status(self, event):
+        self.mouse_position = get_mouse_position(event)
+        if event.type == "LEFTMOUSE":
+            if event.value == "PRESS":
+                self.left_mouse_down = True
+                self.left_mouse_down_position = self.mouse_position
+            elif event.value == "RELEASE":
+                self.left_mouse_down = False
     
     def get_snap_data(self, event, fcurve):
         mouse_x = event.mouse_region_x
@@ -97,6 +140,8 @@ class InsertMarkers(bpy.types.Operator):
         return bpy.context.region.view2d.view_to_region(frame, 0)[0]
     def view_to_region(self, x, y):
         return bpy.context.region.view2d.view_to_region(x, y, clip = False)
+    def region_to_view(self, x, y):
+        return bpy.context.region.view2d.region_to_view(x, y)
   
   
     def insert_marker(self, frame):
@@ -104,14 +149,17 @@ class InsertMarkers(bpy.types.Operator):
   
     def finish(self):
         bpy.types.SpaceGraphEditor.draw_handler_remove(self._handle, "WINDOW")
-        
+        deaktivate()
         
     def draw_callback_px(tmp, self, context):
         if self.mode == "NONE":
             self.draw_temporary_markers()   
-            x = self.mouse_x
+            x = self.mouse_position.x
             size = self.snap_size
             self.draw_marked_area(x-size, x+size, [0.1, 0.1, 0.1, 0.01])
+        if self.mode == "INSERT MULTIPLE MARKERS":
+            self.draw_temporary_markers() 
+            self.draw_marked_area(self.left_mouse_down_position.x, self.mouse_position.x, [0.1, 1.0, 0.1, 0.07])
             
     def draw_temporary_markers(self):
         for location, enabled in self.temporary_markers:
@@ -156,11 +204,45 @@ def insert_markers(frames):
         if frame not in marked_frames:
             scene.timeline_markers.new(name = "#{}".format(frame), frame = frame)     
      
+def get_high_frames(sound_curve, start, end, threshold):
+    start, end = sorted([start, end])
+    frames = []
+    is_over_threshold = False
+    for frame in range(round(start), round(end)):
+        value = sound_curve.evaluate(frame)
+        next_value = sound_curve.evaluate(frame + 1)
+        if value > next_value > threshold and not is_over_threshold:
+            is_over_threshold = True
+            frames.append(frame)
+        if value < threshold:
+            is_over_threshold = False
+    return frames           
+     
 def marker_exists(frame):
     return frame in get_marked_frames()    
         
 def get_marked_frames():
     return [marker.frame for marker in bpy.context.scene.timeline_markers]        
+        
+        
+def get_mouse_position(event):
+    return Vector((event.mouse_region_x, event.mouse_region_y))        
+        
+        
+class StopInsertMarkerOperator(bpy.types.Operator):
+    bl_idname = "audio_to_markers.stop_marker_insertion"
+    bl_label = "Stop Marker Insertion"
+    bl_description = "Stop the modal marker insertion operator"
+    bl_options = {"REGISTER"}
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        deaktivate()
+        return {"FINISHED"}
+                
         
         
 class RemoveMarkers(bpy.types.Operator):

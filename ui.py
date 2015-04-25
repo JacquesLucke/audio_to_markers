@@ -1,5 +1,6 @@
 import bpy
 from . utils import *
+from . insert_markers import is_marker_insertion_running
 
 class AudioToMarkersPanel(bpy.types.Panel):
     bl_idname = "audio_to_markers_panel"
@@ -37,8 +38,11 @@ class AudioToMarkersPanel(bpy.types.Panel):
         row.operator("audio_to_markers.bake_all_frequences", text = "Bake All")
         row.operator("audio_to_markers.remove_baked_data", text = "", icon = "X")
            
-        row = layout.row(align = True)     
-        row.operator("audio_to_markers.insert_markers")     
+        row = layout.row(align = True)   
+        if is_marker_insertion_running(): 
+            row.operator("audio_to_markers.stop_marker_insertion")
+        else: 
+            row.operator("audio_to_markers.insert_markers")     
         row.operator("audio_to_markers.remove_markers", text = "", icon = "X")          
         
         if settings.info != "":
