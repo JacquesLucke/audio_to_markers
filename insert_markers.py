@@ -47,11 +47,12 @@ class InsertMarkers(bpy.types.Operator):
             self.finish()
             return {"CANCELLED"}
         
-        if 20 < event.mouse_region_x < context.region.width - 20 and 20 < event.mouse_region_y < context.region.height - 20:
-            if is_middle_mouse(event):
-                return {"PASS_THROUGH"} 
-        else:
-            return {"PASS_THROUGH"}
+        if self.mode == "NONE":
+            if 20 < event.mouse_region_x < context.region.width - 20 and 20 < event.mouse_region_y < context.region.height - 20:
+                if is_middle_mouse(event):
+                    return {"PASS_THROUGH"} 
+            else:
+                return {"PASS_THROUGH"}
         
         fcurve = get_current_sound_fcurve()
         if not fcurve: 
@@ -83,6 +84,7 @@ class InsertMarkers(bpy.types.Operator):
             for frame in frames:
                 self.temporary_markers.append((self.view_to_region(frame, fcurve.evaluate(frame)), not frame in marked_frames))
             if not self.left_mouse_down:
+                insert_markers(frames)
                 self.mode = "NONE"
                 self.modal(context, event)
             
@@ -209,14 +211,18 @@ def get_high_frames(sound_curve, start, end, threshold):
     frames = []
     is_over_threshold = False
     for frame in range(round(start), round(end)):
-        value = sound_curve.evaluate(frame)
-        next_value = sound_curve.evaluate(frame + 1)
+        value = highest_value_of_frame(sound_curve, frame)
+        next_value = highest_value_of_frame(sound_curve, frame + 1)
         if value > next_value > threshold and not is_over_threshold:
             is_over_threshold = True
             frames.append(frame)
         if value < threshold:
             is_over_threshold = False
-    return frames           
+    return frames     
+
+def highest_value_of_frame(fcurve, frame):
+    return max(fcurve.evaluate(frame-0.5), fcurve.evaluate(frame-0.25), fcurve.evaluate(frame), fcurve.evaluate(frame+0.25))     
+     
      
 def marker_exists(frame):
     return frame in get_marked_frames()    
