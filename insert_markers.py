@@ -35,6 +35,8 @@ class InsertMarkers(bpy.types.Operator):
         self.mouse_position = get_mouse_position(event)
         self.left_mouse_down_position = self.mouse_position
         self.left_mouse_down = False
+        self.right_mouse_down_position = self.mouse_position
+        self.right_mouse_down = False
         self.temporary_markers = []
         activate()
         return {"RUNNING_MODAL"}
@@ -43,12 +45,12 @@ class InsertMarkers(bpy.types.Operator):
         context.area.tag_redraw()
         self.update_mouse_status(event)
             
-        if event.type in {"RIGHTMOUSE", "ESC"} or not is_running:
+        if event.type in {"ESC"} or not is_running:
             self.finish()
             return {"CANCELLED"}
         
         if self.mode == "NONE":
-            if 20 < event.mouse_region_x < context.region.width - 20 and 20 < event.mouse_region_y < context.region.height - 20:
+            if self.is_in_region(event):
                 if is_middle_mouse(event):
                     return {"PASS_THROUGH"} 
             else:
@@ -73,6 +75,10 @@ class InsertMarkers(bpy.types.Operator):
                 if (self.mouse_position - self.left_mouse_down_position).length > 10:
                     self.mode = "INSERT MULTIPLE MARKERS"
                     
+            if self.right_mouse_down:
+                if (self.mouse_position - self.right_mouse_down_position).length > 10:
+                    self.mode = "REMOVE MARKERS"
+                    
         if self.mode == "INSERT MULTIPLE MARKERS":
             start_frame = self.get_frame_under_region_x(self.left_mouse_down_position.x)
             end_frame = self.get_frame_under_region_x(event.mouse_region_x)
@@ -87,17 +93,36 @@ class InsertMarkers(bpy.types.Operator):
                 insert_markers(frames)
                 self.mode = "NONE"
                 self.modal(context, event)
+                
+        if self.mode == "REMOVE MARKERS":
+            start_frame = self.get_frame_under_region_x(self.right_mouse_down_position.x)
+            end_frame = self.get_frame_under_region_x(event.mouse_region_x)
+            print(start_frame, end_frame)
+            if not self.right_mouse_down:
+                remove_markers(start_frame, end_frame)
+                self.mode = "NONE"
+                self.modal(context, event)
             
         return {"RUNNING_MODAL"}
     
     def update_mouse_status(self, event):
         self.mouse_position = get_mouse_position(event)
         if event.type == "LEFTMOUSE":
-            if event.value == "PRESS":
+            if event.value == "PRESS" and self.is_in_region(event):
                 self.left_mouse_down = True
                 self.left_mouse_down_position = self.mouse_position
             elif event.value == "RELEASE":
                 self.left_mouse_down = False
+        if event.type == "RIGHTMOUSE":
+            if event.value == "PRESS" and self.is_in_region(event):
+                self.right_mouse_down = True
+                self.right_mouse_down_position = self.mouse_position
+            elif event.value == "RELEASE":
+                self.right_mouse_down = False
+                
+    def is_in_region(self, event):
+        region = bpy.context.region
+        return 20 < event.mouse_region_x < region.width - 10 and 20 < event.mouse_region_y < region.height - 10
     
     def get_snap_data(self, event, fcurve):
         mouse_x = event.mouse_region_x
@@ -162,6 +187,9 @@ class InsertMarkers(bpy.types.Operator):
         if self.mode == "INSERT MULTIPLE MARKERS":
             self.draw_temporary_markers() 
             self.draw_marked_area(self.left_mouse_down_position.x, self.mouse_position.x, [0.1, 1.0, 0.1, 0.07])
+        if self.mode == "REMOVE MARKERS":
+            self.draw_marked_area(self.right_mouse_down_position.x, self.mouse_position.x, [1.0, 0.1, 0.1, 0.07])
+            
             
     def draw_temporary_markers(self):
         for location, enabled in self.temporary_markers:
@@ -204,7 +232,15 @@ def insert_markers(frames):
     marked_frames = get_marked_frames()
     for frame in frames:
         if frame not in marked_frames:
-            scene.timeline_markers.new(name = "#{}".format(frame), frame = frame)     
+            scene.timeline_markers.new(name = "#{}".format(frame), frame = frame) 
+            
+def remove_markers(start, end):
+    start, end = sorted([start, end])
+    print(start, end)
+    markers = bpy.context.scene.timeline_markers
+    for marker in markers:
+        if start <= marker.frame <= end:
+            markers.remove(marker)                
      
 def get_high_frames(sound_curve, start, end, threshold):
     start, end = sorted([start, end])
