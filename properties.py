@@ -39,11 +39,11 @@ def apply_preset(self, context):
         is_setting = False
         
 def make_frequence_ui_name(low, high):
-    return "{} - {} Hz".format(round(low), round(high))   
+    return "{} - {} Hz".format(round(low), round(high))
 
 def property_changed(self, context):
     from .bake_sound import update_fcurve_selection
-    update_fcurve_selection()         
+    update_fcurve_selection()
         
 
 class SoundStripData(PropertyGroup):

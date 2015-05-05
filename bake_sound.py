@@ -5,15 +5,15 @@ from . utils import *
 from . event_helper import *
 from . properties import frequence_ranges
 
-def update_fcurve_selection():   
+def update_fcurve_selection():
     current_fcurve = get_current_sound_fcurve()
     if current_fcurve:
-        settings = get_settings() 
+        settings = get_settings()
         fcurves = get_sound_fcurves()
         for fcurve in fcurves:
             fcurve.hide = settings.hide_unused_fcurves
         current_fcurve.hide = False
-        only_select_fcurve(current_fcurve)  
+        only_select_fcurve(current_fcurve)
 
 
 class SelectSoundFile(bpy.types.Operator):
@@ -54,7 +54,7 @@ class LoadSoundIntoSequenceEditor(bpy.types.Operator):
         channel = self.get_empty_channel_index(scene)
         
         sequence = scene.sequence_editor.sequences.new_sound(
-            name = name, 
+            name = name,
             filepath = path,
             frame_start = frame,
             channel = channel)
@@ -69,7 +69,7 @@ class LoadSoundIntoSequenceEditor(bpy.types.Operator):
     def create_sequence_editor_if_necessary(self):
         scene = bpy.context.scene
         if not scene.sequence_editor:
-            scene.sequence_editor_create() 
+            scene.sequence_editor_create()
     
     def get_empty_channel_index(self, scene):
         used_channels = [sequence.channel for sequence in scene.sequence_editor.sequences]
@@ -99,8 +99,8 @@ class RemoveSoundStrips(bpy.types.Operator):
             if sequence:
                 sequence.sound.use_memory_cache = False
                 sequences.remove(sequence)
-        settings.sound_strips.clear()   
-             
+        settings.sound_strips.clear()
+            
         return {"FINISHED"}
             
             
@@ -116,8 +116,8 @@ class CacheSounds(bpy.types.Operator):
             if sound.filepath == path and not sound.use_memory_cache:
                 sound.use_memory_cache = True
         return {"FINISHED"}
-               
-               
+            
+            
 class BakeSound(bpy.types.Operator):
     bl_idname = "audio_to_markers.bake_sound"
     bl_label = "Bake Sound"
@@ -146,7 +146,7 @@ class BakeSound(bpy.types.Operator):
             low = settings.bake.low,
             high = settings.bake.high)
         
-        scene.frame_current = frame_before            
+        scene.frame_current = frame_before
         update_fcurve_selection()
         return {"FINISHED"}
     
@@ -189,7 +189,7 @@ class BakeAllFrequences(bpy.types.Operator):
         
         settings = get_settings()
         bake_settings = settings.bake
-        self.counter += 1    
+        self.counter += 1
         
         if event.type == "TIMER" and self.counter % 30 == 0:
             context.area.tag_redraw()
@@ -206,7 +206,7 @@ class BakeAllFrequences(bpy.types.Operator):
         get_settings().info = ""
         bpy.context.area.tag_redraw()
             
-                   
+                
 class RemoveBakedData(bpy.types.Operator):
     bl_idname = "audio_to_markers.remove_baked_data"
     bl_label = "Remove Baked Data"
@@ -219,7 +219,7 @@ class RemoveBakedData(bpy.types.Operator):
             context.scene.animation_data.action.fcurves.remove(fcurve)
         context.area.tag_redraw()
         return {"FINISHED"}
-                               
+                            
 
 def get_sound_fcurves():
     fcurves = []
@@ -228,20 +228,20 @@ def get_sound_fcurves():
             if fcurve.data_path.startswith("audio_to_markers.baked_data["):
                 fcurves.append(fcurve)
     except: pass
-    return fcurves                              
-                               
+    return fcurves
+                            
 def get_current_sound_fcurve():
     def is_current_item(item):
         return item.path == settings.path and \
             item.bake.low == settings.bake.low and \
             item.bake.high == settings.bake.high
-                     
-    settings = get_settings()   
-    for i, item in enumerate(settings.baked_data):   
+                    
+    settings = get_settings()
+    for i, item in enumerate(settings.baked_data):
         if is_current_item(item):
             return get_fcurve_from_item_index(i)
-    return None    
+    return None
 
 def get_fcurve_from_item_index(index):
     data_path = "audio_to_markers.baked_data[{}].strength".format(index)
-    return get_fcurve_from_path(bpy.context.scene, data_path)                      
+    return get_fcurve_from_path(bpy.context.scene, data_path)

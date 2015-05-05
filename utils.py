@@ -14,7 +14,7 @@ def deselect_all_fcurves():
         for fcurve in action.fcurves:
             fcurve.select = False
             
-  
+
 def get_fcurve_from_path(object, data_path):
     try:
         for fcurve in object.animation_data.action.fcurves:

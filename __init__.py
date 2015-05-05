@@ -53,8 +53,8 @@ def import_submodules():
             if use_file(file_path):
                 python_files.append(file_path)
     
-    # import found files as submodules   
-    loaded_modules = []          
+    # import found files as submodules
+    loaded_modules = []
     for file_path in python_files:
         module_name = __name__ + "." + file_path[len(current_path)+1:-3]
         if module_name in sys.modules:
@@ -63,9 +63,9 @@ def import_submodules():
         
     return loaded_modules
         
-loaded_modules = import_submodules()  
+loaded_modules = import_submodules()
 
-   
+
 def register():
     try: bpy.utils.register_module(__name__)
     except: pass

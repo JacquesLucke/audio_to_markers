@@ -14,7 +14,7 @@ def deaktivate():
     is_running = False
     
 def is_marker_insertion_running():
-    return is_running    
+    return is_running
 
 class InsertMarkers(bpy.types.Operator):
     bl_idname = "audio_to_markers.insert_markers"
@@ -52,12 +52,12 @@ class InsertMarkers(bpy.types.Operator):
         if self.mode == "NONE":
             if self.is_in_region(event):
                 if is_middle_mouse(event):
-                    return {"PASS_THROUGH"} 
+                    return {"PASS_THROUGH"}
             else:
                 return {"PASS_THROUGH"}
         
         fcurve = get_current_sound_fcurve()
-        if not fcurve: 
+        if not fcurve:
             self.mode = "NO_FCURVE"
             return {"RUNNING_MODAL"}
         elif self.mode == "NO_FCURVE":
@@ -169,23 +169,23 @@ class InsertMarkers(bpy.types.Operator):
         return bpy.context.region.view2d.view_to_region(x, y, clip = False)
     def region_to_view(self, x, y):
         return bpy.context.region.view2d.region_to_view(x, y)
-  
-  
+
+
     def insert_marker(self, frame):
         bpy.context.scene.timeline_markers.new(frame = frame, name = "# " + str(frame))
-  
+
     def finish(self):
         bpy.types.SpaceGraphEditor.draw_handler_remove(self._handle, "WINDOW")
         deaktivate()
         
     def draw_callback_px(tmp, self, context):
         if self.mode == "NONE":
-            self.draw_temporary_markers()   
+            self.draw_temporary_markers()
             x = self.mouse_position.x
             size = self.snap_size
             self.draw_marked_area(x-size, x+size, [0.1, 0.1, 0.1, 0.01])
         if self.mode == "INSERT MULTIPLE MARKERS":
-            self.draw_temporary_markers() 
+            self.draw_temporary_markers()
             self.draw_marked_area(self.left_mouse_down_position.x, self.mouse_position.x, [0.1, 1.0, 0.1, 0.07])
         if self.mode == "REMOVE MARKERS":
             self.draw_marked_area(self.right_mouse_down_position.x, self.mouse_position.x, [1.0, 0.1, 0.1, 0.07])
@@ -193,7 +193,7 @@ class InsertMarkers(bpy.types.Operator):
             
     def draw_temporary_markers(self):
         for location, enabled in self.temporary_markers:
-            self.draw_marker(location, enabled) 
+            self.draw_marker(location, enabled)
     
     def draw_marker(self, location, enabled = True):
         if enabled:
@@ -202,13 +202,13 @@ class InsertMarkers(bpy.types.Operator):
         else:
             color = [0.8, 0.8, 0.8, 0.5]
             size = 5.0
-          
+        
         glColor4f(*color)
         glEnable(GL_BLEND)
         glPointSize(size)
         glBegin(GL_POINTS)
         glVertex2f(*location)
-        glEnd() 
+        glEnd()
         
         color[3] = 0.2
         glColor4f(*color)
@@ -232,7 +232,7 @@ def insert_markers(frames):
     marked_frames = get_marked_frames()
     for frame in frames:
         if frame not in marked_frames:
-            scene.timeline_markers.new(name = "#{}".format(frame), frame = frame) 
+            scene.timeline_markers.new(name = "#{}".format(frame), frame = frame)
             
 def remove_markers(start, end):
     start, end = sorted([start, end])
@@ -240,8 +240,8 @@ def remove_markers(start, end):
     markers = bpy.context.scene.timeline_markers
     for marker in markers:
         if start <= marker.frame <= end:
-            markers.remove(marker)                
-     
+            markers.remove(marker)
+    
 def get_high_frames(sound_curve, start, end, threshold):
     start, end = sorted([start, end])
     frames = []
@@ -254,21 +254,21 @@ def get_high_frames(sound_curve, start, end, threshold):
             frames.append(frame)
         if value < threshold:
             is_over_threshold = False
-    return frames     
+    return frames
 
 def highest_value_of_frame(fcurve, frame):
-    return max(fcurve.evaluate(frame-0.5), fcurve.evaluate(frame-0.25), fcurve.evaluate(frame), fcurve.evaluate(frame+0.25))     
-     
-     
+    return max(fcurve.evaluate(frame-0.5), fcurve.evaluate(frame-0.25), fcurve.evaluate(frame), fcurve.evaluate(frame+0.25))
+    
+    
 def marker_exists(frame):
-    return frame in get_marked_frames()    
+    return frame in get_marked_frames()
         
 def get_marked_frames():
-    return [marker.frame for marker in bpy.context.scene.timeline_markers]        
+    return [marker.frame for marker in bpy.context.scene.timeline_markers]
         
         
 def get_mouse_position(event):
-    return Vector((event.mouse_region_x, event.mouse_region_y))        
+    return Vector((event.mouse_region_x, event.mouse_region_y))
         
         
 class StopInsertMarkerOperator(bpy.types.Operator):
